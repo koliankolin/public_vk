@@ -35,6 +35,7 @@ class NewsLoaderMirror(NewsLoader):
                 tr.translate(full_text, dest='ru', src='en').text,
                 link_news,
                 img,
+                self.source,
             )
             result.append(t)
             time.sleep(10)

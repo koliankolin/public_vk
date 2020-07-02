@@ -4,3 +4,6 @@ SOURCES_URLS = {
         'teaser_cls': 'teaser',
     },
 }
+
+VK_URL = 'https://api.vk.com/method/'
+VK_VERSION = '5.120'
