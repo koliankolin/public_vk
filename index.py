@@ -1,11 +1,11 @@
-from Classes.vk.ImageLoader import ImageLoader
+from Classes.vk.Post import Post
 
 
 def main():
     # mirrorLoader = NewsLoaderMirror('mirror', 5)
     # print(mirrorLoader.getNewsMappers())
-    imgLoader = ImageLoader('code_email.png')
-    print(imgLoader.loadPhoto())
+    post = Post()
+    print(post.post())
 
 
 if __name__ == '__main__':

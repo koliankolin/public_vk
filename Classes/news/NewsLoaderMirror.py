@@ -38,7 +38,7 @@ class NewsLoaderMirror(NewsLoader):
                 self.source,
             )
             result.append(t)
-            time.sleep(10)
+            time.sleep(3)
 
         return result
 
