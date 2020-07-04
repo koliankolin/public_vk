@@ -9,7 +9,7 @@ def main():
     # mirrorLoader = NewsLoaderMirror('mirror', 5)
     # print(mirrorLoader.getNewsMappers())
     start_time = int(time.mktime(datetime.date(2020, 7, 1).timetuple()))
-    end_time = int(time.mktime(datetime.date(2020, 7, 3).timetuple()))
+    end_time = int(time.mktime(datetime.date(2020, 7, 5).timetuple()))
     comment = Comment(start_time, end_time)
     pprint(comment.getComments())
 
