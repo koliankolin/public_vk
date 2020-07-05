@@ -81,13 +81,14 @@ class Comment(Base):
     def _prepareComments(self, comments, post_id):
         result = []
         for comment in comments:
-            result.append({
-                'from_id': comment['from_id'],
-                'id': comment['id'],
-                'likes_count': self._getOurLikesByCommentId(comment['id']),
-                'text': comment['text'],
-                'post_id': post_id,
-            })
+            if comment['from_id'] in self.subscribers:
+                result.append({
+                    'from_id': comment['from_id'],
+                    'id': comment['id'],
+                    'likes_count': self._getOurLikesByCommentId(comment['id']),
+                    'text': comment['text'],
+                    'post_id': post_id,
+                })
 
         return result
 

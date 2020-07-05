@@ -1,6 +1,6 @@
 import constants
 from Classes.vk.Base import Base
-from Classes.vk.Image import Image
+from Classes.vk.Image import ImageCls
 from Classes.news.NewsLoaderMirror import NewsLoaderMirror
 from tqdm import tqdm
 
@@ -17,7 +17,7 @@ class Post(Base):
                     'owner_id': -constants.VK_GROUP_ID,
                     'from_group': 1,
                     'message': f'{new.teaser_en}\n\n{new.text_en}\n\n---------------------------------------\n\n{new.teaser_ru}\n\n{new.text_ru}\n\nИсточник:  {new.source.capitalize()}',
-                    'attachments': Image(photo_link=new.img).loadPhoto(),
+                    'attachments': ImageCls(photo_link=new.img).loadPhoto(),
                     'publish_date': publish_date,
                     'signed': 0,
                 })
