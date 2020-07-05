@@ -7,11 +7,12 @@ import requests
 import math
 import mem_const
 import random
+from Classes.image.Unsplash import Unsplash
 
 class ImageCls(Base):
-    def __init__(self, photo_link):
+    def __init__(self):
         super().__init__()
-        self.photo_link = photo_link
+        self.photo_link = Unsplash().loadImageUrl()
 
     def loadPhoto(self):
         ua = UserAgent()

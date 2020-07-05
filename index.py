@@ -1,3 +1,4 @@
+from Classes.image.Unsplash import Unsplash
 from Classes.vk.Image import ImageCls
 
 import time
@@ -10,7 +11,9 @@ def main():
     # print(mirrorLoader.getNewsMappers())
     start_time = int(time.mktime(datetime.date(2020, 7, 1).timetuple()))
     end_time = int(time.mktime(datetime.date(2020, 7, 5).timetuple()))
-    image = ImageCls('https://images.unsplash.com/photo-1558981420-87aa9dad1c89?ixlib=rb-1.2.1&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=1080&fit=max&ixid=eyJhcHBfaWQiOjE0NjI0MX0')
+    # unsplash = Unsplash()
+    # print(unsplash.loadImageUrl())
+    image = ImageCls()
     print(image.loadPhoto())
     # comment = Comment(start_time, end_time)
     # pprint(comment.getComments())

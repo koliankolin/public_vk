@@ -1,7 +1,7 @@
 import constants
 from Classes.vk.Base import Base
 from Classes.vk.Image import ImageCls
-from Classes.news.NewsLoaderMirror import NewsLoaderMirror
+from Classes.image.NewsLoaderMirror import NewsLoaderMirror
 from tqdm import tqdm
 
 

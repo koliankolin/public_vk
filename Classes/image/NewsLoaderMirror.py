@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import time
 from Mappers.News import News
-from Classes.news.NewsLoader import NewsLoader
+from Classes.image.NewsLoader import NewsLoader
 from googletrans import Translator
 from tqdm import tqdm
 
