@@ -3,6 +3,8 @@ import constants
 import time
 import random
 from datetime import datetime
+from collections import Counter, OrderedDict
+
 
 class Comment(Base):
     def __init__(self, start_time, end_time):
@@ -24,58 +26,143 @@ class Comment(Base):
     def _getPostIds(self):
         return [post['post_id'] for post in self.posts]
 
-    def getComments(self):
+    def getStats(self):
         postIds = self._getPostIds()
         comments = []
+        counterPostLikes = Counter()
+        counterCommentLikes = Counter()
+        counterComments = Counter()
+        counterReposts = Counter()
         for postId in postIds:
-            preparedComments = self._prepareComments(self.api.method('wall.getComments', {
-                'owner_id': -constants.VK_GROUP_ID,
-                'post_id': str(postId),
-                'need_likes': 1,
-                'count': 100,
-            })['items'], postId) # from_id, id, text
+            counterPostLikes += self._getCounterUsersLikesByPostId(postId)
+            commentsByPostId = self._getAllCommentsByPostId(postId)
+            preparedComments = self._prepareComments(commentsByPostId, postId)
+            counterCommentLikes += self._getTotalCounterForComments(commentsByPostId)
+            counterComments += self._getCounterUsersComments(commentsByPostId)
+            counterReposts += self._getCounterUsersReposts(postId)
             comments += preparedComments
         bestComment = self._getBestComment(comments)
         bestComment = bestComment if bestComment else random.choice(comments)
-        leaderBoard = self._getLeaderBoard(comments)
+        commentLeaderBoard = self._filterLeaderBoardBySubscribers(OrderedDict(self._getCommentLeaderBoard(comments)))
+
+        counters = {
+            'like': counterPostLikes + counterCommentLikes,
+            'comment': counterComments,
+            'repost': counterReposts,
+        }
+
+        activeLeaderBoard = self._filterLeaderBoardBySubscribers(dict(self._getActiveLeaderBoard(counters)))
+        leaderBoards = {
+            'best_comment': bestComment,
+            'comment': commentLeaderBoard,
+            'active': activeLeaderBoard,
+        }
+        return self._createMessage(leaderBoards)
         res = self.api.method('wall.post', {
             'owner_id': -constants.VK_GROUP_ID,
             'from_group': 1,
-            'message': self._createMessage(bestComment, leaderBoard),
+            'message': self._createMessage(bestComment, commentLeaderBoard),
             # 'attachments': Image(photo_link=new.img).loadPhoto(),
             'signed': 0,
         })
 
         return res
 
-    def _createMessage(self, bestComment, leaderBoard):
+    def _createMessage(self, leaderBoards, need_prizes=False):
+        #TODO add full names from VK
+        bestCommentPrize = f"Приз: {constants.BEST_COMMENT_PRIZE} р." if need_prizes else ""
+        ratings = f"""
+Рейтинг комментеров:
+{self._leaderBoardToStr(leaderBoards['comment'], 'likes')}
+
+Рейтинг по активности.
+Рассчитывается по формуле:
+рейтинг = кол-во проставленных лайков в группе(комменты + посты) * {constants.ACTIVE_COEFFICIENTS['like']} + кол-во комментов в группе * {constants.ACTIVE_COEFFICIENTS['comment']} + кол-во сделанных репостов * {constants.ACTIVE_COEFFICIENTS['repost']}
+{self._leaderBoardToStr(leaderBoards['active'], 'points')}
+        """
         frm = '%d.%m.%Y'
         date_start = datetime.utcfromtimestamp(self.start_time).strftime(frm)
         date_end = datetime.utcfromtimestamp(self.end_time).strftime(frm)
-        return f"""Лучшие мамкины комментаторы недели ({date_start} - {date_end})
-        
-        Лучший комментарий:
-        Награждается [https://vk.com/id{bestComment['from_id']}|id{bestComment['from_id']}] за комментарий 
-        "{bestComment['text']}" к [https://vk.com/public196777471?w=wall-196777471_{bestComment['post_id']}|посту]
-        Приз: {constants.BEST_COMMENT_PRIZE} р.
-        
-        Лидеры комментаторов:
-        {self._leaderBoardToStr(leaderBoard)}
-        """
+        return f"""Лучшие мамкины комментеры недели ({date_start} - {date_end})
 
-    def _getLeaderBoard(self, comments):
+Лучший комментарий:
+Награждается [https://vk.com/id{leaderBoards['best_comment']['from_id']}|id{leaderBoards['best_comment']['from_id']}] за комментарий 
+"{leaderBoards['best_comment']['text']}" к [https://vk.com/public196777471?w=wall-196777471_{leaderBoards['best_comment']['post_id']}|посту]
+{bestCommentPrize}
+{ratings}
+"""
+
+    def _filterLeaderBoardBySubscribers(self, leaderBoard):
+        filteredLeaderBoard = OrderedDict()
+        for id_, val in leaderBoard.items():
+            if id_ in self.subscribers:
+                filteredLeaderBoard[id_] = val
+            # TODO: send message to enter group and sum of lost price
+        return filteredLeaderBoard
+
+    def _getActiveLeaderBoard(self, counters):
+        rating = Counter()
+        for coef_key, coef_val in constants.ACTIVE_COEFFICIENTS.items():
+            for cnt_key in counters[coef_key].keys():
+                counters[coef_key][cnt_key] *= coef_val
+            rating += counters[coef_key]
+        return rating.most_common()
+
+    def _getAllUsersRepostsByPostId(self, post_id):
+        page = 0
+        limit = 1000
+        result = []
+        while True:
+            offset = page * limit
+            res = self.api.method('wall.getReposts', {
+                'owner_id': -constants.VK_GROUP_ID,
+                'post_id': str(post_id),
+                'count': limit,
+            })
+            result += res['profiles']
+            if len(res['items']) < offset + limit:
+                break
+            print(res['count'])
+            page += 1
+            time.sleep(0.4)
+
+        return [profile['id'] for profile in result]
+
+    def _getAllCommentsByPostId(self, post_id):
+        page = 0
+        limit = 100
+        result = []
+        while True:
+            offset = page * limit
+            res = self.api.method('wall.getComments', {
+                'owner_id': -constants.VK_GROUP_ID,
+                'post_id': str(post_id),
+                'need_likes': 1,
+                'count': limit,
+            })
+            result += res['items']
+            if res['count'] < offset + limit:
+                break
+            print(res['count'])
+            page += 1
+            time.sleep(0.4)
+
+        return result
+
+    def _getCommentLeaderBoard(self, comments):
         users = {}
         for comment in comments:
             users.setdefault(comment['from_id'], 0)
             users[comment['from_id']] += comment['likes_count']
-        return sorted(users.items(), key=lambda item: item[1], reverse=True)[:3]
+        return sorted(users.items(), key=lambda item: item[1], reverse=True)[:constants.TOP_NUMBER]
 
     @staticmethod
-    def _leaderBoardToStr(leaderBoard):
+    def _leaderBoardToStr(leaderBoard, type, need_prizes=False):
         result = ''
-        for (i, val), price in zip(enumerate(leaderBoard), constants.PRIZES):
+        for (i, val), price in zip(enumerate(leaderBoard.items()), constants.PRIZES):
             id_, likes = val
-            result += f"{i + 1}. [https://vk.com/id{id_}|id{id_}] - {likes} likes. Приз: {price} р.\n"
+            prize = f"Приз: {price} р.\n" if need_prizes else ""
+            result += f"{i + 1}. [https://vk.com/id{id_}|id{id_}] - {likes} {type}. {prize}\n"
         return result
 
     def _prepareComments(self, comments, post_id):
@@ -92,17 +179,17 @@ class Comment(Base):
 
         return result
 
-    def _getOurLikesByCommentId(self, comment_id):
+    def _getUsersLikesByObjTypeAndId(self, obj_type, obj_id) -> set:
         page = 0
         limit = 1000
         result = []
         while True:
             offset = page * limit
             res = self.api.method('likes.getList', {
-                'type': 'comment',
+                'type': obj_type,
                 'owner_id': -constants.VK_GROUP_ID,
-                'item_id': comment_id,
-                'count': 1000,
+                'item_id': obj_id,
+                'count': limit,
             })
             result += res['items']
             if res['count'] < offset + limit:
@@ -111,7 +198,29 @@ class Comment(Base):
             page += 1
             time.sleep(0.4)
 
-        return len(set(result).intersection(self.subscribers))
+        return set(result)
+
+    def _getCounterUsersLikesByPostId(self, post_id):
+        return Counter(self._getUsersLikesByObjTypeAndId('post', post_id))
+
+    def _getCounterUsersLikesByCommentId(self, comment_id):
+        return Counter(self._getUsersLikesByObjTypeAndId('comment', comment_id))
+
+    def _getCounterUsersReposts(self, post_id):
+        return Counter(self._getAllUsersRepostsByPostId(post_id))
+
+    def _getCounterUsersComments(self, comments):
+        return Counter([comment['from_id'] for comment in comments])
+
+    def _getTotalCounterForComments(self, comments):
+        counter = Counter()
+        for comment in comments:
+            counter += self._getCounterUsersLikesByCommentId(comment['id'])
+        return counter
+
+    def _getOurLikesByCommentId(self, comment_id):
+        likes = self._getUsersLikesByObjTypeAndId('comment', comment_id)
+        return len(likes.intersection(self.subscribers))
 
     @staticmethod
     def _getBestComment(comments, min_likes=constants.MIN_LIKES):

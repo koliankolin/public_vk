@@ -1,5 +1,6 @@
 from Classes.image.Unsplash import Unsplash
 from Classes.vk.Image import ImageCls
+from Classes.vk.Comment import Comment
 
 import time
 import datetime
@@ -13,10 +14,10 @@ def main():
     end_time = int(time.mktime(datetime.date(2020, 7, 5).timetuple()))
     # unsplash = Unsplash()
     # print(unsplash.loadImageUrl())
-    image = ImageCls()
-    print(image.loadPhoto())
-    # comment = Comment(start_time, end_time)
-    # pprint(comment.getComments())
+    # image = ImageCls()
+    # print(image.loadPhoto())
+    comment = Comment(start_time, end_time)
+    print(comment.getStats())
 
 
 if __name__ == '__main__':
