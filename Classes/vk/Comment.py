@@ -57,7 +57,7 @@ class Comment(Base):
             'comment': commentLeaderBoard,
             'active': activeLeaderBoard,
         }
-        return self._createMessage(leaderBoards, True)
+        return self._createMessage(leaderBoards)
         res = self.api.method('wall.post', {
             'owner_id': -constants.VK_GROUP_ID,
             'from_group': 1,
@@ -73,12 +73,12 @@ class Comment(Base):
         bestCommentPrize = f"Приз: {constants.BEST_COMMENT_PRIZE} р." if need_prizes else ""
         ratings = f"""
 Рейтинг комментеров:
-{self._leaderBoardToStr(leaderBoards['comment'], 'likes', True)}
+{self._leaderBoardToStr(leaderBoards['comment'], 'likes')}
 
 Рейтинг по активности.
 Рассчитывается по формуле:
 рейтинг = кол-во проставленных лайков в группе(комменты + посты) * {constants.ACTIVE_COEFFICIENTS['like']} + кол-во комментов в группе * {constants.ACTIVE_COEFFICIENTS['comment']} + кол-во сделанных репостов * {constants.ACTIVE_COEFFICIENTS['repost']}
-{self._leaderBoardToStr(leaderBoards['active'], 'points', True)}
+{self._leaderBoardToStr(leaderBoards['active'], 'points')}
         """
         frm = '%d.%m.%Y'
         date_start = datetime.utcfromtimestamp(self.start_time).strftime(frm)
@@ -87,7 +87,7 @@ class Comment(Base):
 
 Лучший комментарий:
 "{leaderBoards['best_comment']['text']}"
-от [https://vk.com/id{leaderBoards['best_comment']['from_id']}|id{leaderBoards['best_comment']['from_id']}] к [https://vk.com/public196777471?w=wall-196777471_{leaderBoards['best_comment']['post_id']}|посту] собрал {leaderBoards['likes_count']}
+от [https://vk.com/id{leaderBoards['best_comment']['from_id']}|id{leaderBoards['best_comment']['from_id']}] к [https://vk.com/public196777471?w=wall-196777471_{leaderBoards['best_comment']['post_id']}|посту] собрал {leaderBoards['best_comment']['likes_count']} likes.
 {bestCommentPrize}
 {ratings}
 """
