@@ -4,6 +4,7 @@ import time
 import random
 from datetime import datetime
 from collections import Counter, OrderedDict
+import os
 
 
 class Comment(Base):
@@ -13,6 +14,7 @@ class Comment(Base):
         self.end_time = end_time
         self.subscribers = self._getAllSubscribers()
         self.posts = self._getPosts()
+        self.fileStatsPostId = 'stats.id'
 
     def _getPosts(self):
         return self.api.method('newsfeed.get', {
@@ -57,18 +59,43 @@ class Comment(Base):
             'comment': commentLeaderBoard,
             'active': activeLeaderBoard,
         }
-        return self._createMessage(leaderBoards)
+        statsPostId = self._getStatsPostId()
+        if statsPostId:
+            self._deletePostById(statsPostId)
+
         res = self.api.method('wall.post', {
             'owner_id': -constants.VK_GROUP_ID,
             'from_group': 1,
-            'message': self._createMessage(bestComment, commentLeaderBoard),
+            'message': self._createMessage(leaderBoards),
             # 'attachments': Image(photo_link=new.img).loadPhoto(),
             'signed': 0,
         })
+        self._savePostIdToFile(res['post_id'])
+        self._pinPostById(res['post_id'])
 
-        return res
+    def _getStatsPostId(self):
+        if os.path.exists(self.fileStatsPostId):
+            with open(self.fileStatsPostId, 'r') as f:
+                return f.readline().strip()
+        return None
 
-    def _createMessage(self, leaderBoards, need_prizes=False):
+    def _deletePostById(self, post_id):
+         self.api.method('wall.delete', {
+             'owner_id': -constants.VK_GROUP_ID,
+             'post_id': str(post_id),
+         })
+
+    def _savePostIdToFile(self, postId):
+        with open(self.fileStatsPostId, 'w') as f:
+            f.write(str(postId))
+
+    def _pinPostById(self, postId):
+        self.api.method('wall.pin', {
+            'owner_id': -constants.VK_GROUP_ID,
+            'post_id': postId,
+        })
+
+    def _createMessage(self, leaderBoards, is_fin=False, need_prizes=False):
         #TODO add full names from VK
         bestCommentPrize = f"Приз: {constants.BEST_COMMENT_PRIZE} р." if need_prizes else ""
         ratings = f"""
