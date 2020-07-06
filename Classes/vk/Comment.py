@@ -43,8 +43,8 @@ class Comment(Base):
             counterComments += self._getCounterUsersComments(commentsByPostId)
             counterReposts += self._getCounterUsersReposts(postId)
             comments += preparedComments
-        bestComment = self._getBestComment(comments)
-        bestComment = bestComment if bestComment else random.choice(comments)
+        bestComments = self._getBestCommentsRating(comments)
+        # bestCommentsLeaderBoard = self._getBestCommentsRatingToStr(OrderedDict(bestComments))
         commentLeaderBoard = self._filterLeaderBoardBySubscribers(OrderedDict(self._getCommentLeaderBoard(comments)))
 
         counters = {
@@ -53,9 +53,9 @@ class Comment(Base):
             'repost': counterReposts,
         }
 
-        activeLeaderBoard = self._filterLeaderBoardBySubscribers(dict(self._getActiveLeaderBoard(counters)))
+        activeLeaderBoard = self._filterLeaderBoardBySubscribers(OrderedDict(self._getActiveLeaderBoard(counters)))
         leaderBoards = {
-            'best_comment': bestComment,
+            'best_comments': bestComments,
             'comment': commentLeaderBoard,
             'active': activeLeaderBoard,
         }
@@ -95,10 +95,18 @@ class Comment(Base):
             'post_id': postId,
         })
 
-    def _createMessage(self, leaderBoards, is_fin=False, need_prizes=False):
+    def _createMessage(self, leaderBoards, need_prizes=False):
         #TODO add full names from VK
-        bestCommentPrize = f"Приз: {constants.BEST_COMMENT_PRIZE} р." if need_prizes else ""
+        frm = '%d.%m.%Y'
+        date_start = datetime.utcfromtimestamp(self.start_time).strftime(frm)
+        date_end = datetime.utcfromtimestamp(self.end_time).strftime(frm)
+        is_fin = self._checkIsFinDate()
+        header = f"Финальные рейтинги за неделю {date_start} - {date_end}" if is_fin else f"Предварительные рейтинги за неделю {date_start} - {date_end}"
+
         ratings = f"""
+Рейтинг комментариев:
+{self._getBestCommentsRatingToStr(leaderBoards['best_comments'])}
+
 Рейтинг комментеров:
 {self._leaderBoardToStr(leaderBoards['comment'], 'likes')}
 
@@ -107,17 +115,15 @@ class Comment(Base):
 рейтинг = кол-во проставленных лайков в группе(комменты + посты) * {constants.ACTIVE_COEFFICIENTS['like']} + кол-во комментов в группе * {constants.ACTIVE_COEFFICIENTS['comment']} + кол-во сделанных репостов * {constants.ACTIVE_COEFFICIENTS['repost']}
 {self._leaderBoardToStr(leaderBoards['active'], 'points')}
         """
-        frm = '%d.%m.%Y'
-        date_start = datetime.utcfromtimestamp(self.start_time).strftime(frm)
-        date_end = datetime.utcfromtimestamp(self.end_time).strftime(frm)
-        return f"""Лучшие мамкины комментеры недели ({date_start} - {date_end})
 
-Лучший комментарий:
-"{leaderBoards['best_comment']['text']}"
-от [https://vk.com/id{leaderBoards['best_comment']['from_id']}|id{leaderBoards['best_comment']['from_id']}] к [https://vk.com/public196777471?w=wall-196777471_{leaderBoards['best_comment']['post_id']}|посту] собрал {leaderBoards['best_comment']['likes_count']} likes.
-{bestCommentPrize}
+        return f"""{header}
+
 {ratings}
 """
+
+    @staticmethod
+    def _checkIsFinDate():
+        return datetime.today().weekday() == 0
 
     def _filterLeaderBoardBySubscribers(self, leaderBoard):
         filteredLeaderBoard = OrderedDict()
@@ -192,6 +198,14 @@ class Comment(Base):
             result += f"{i + 1}. [https://vk.com/id{id_}|id{id_}] - {likes} {type}. {prize}\n"
         return result
 
+    @staticmethod
+    def _getBestCommentsRatingToStr(leaderBoard, need_prizes=False):
+        result = ''
+        for i, val in enumerate(leaderBoard):
+            prize = f"Приз: {constants.BEST_COMMENT_PRIZE[i]} р." if need_prizes else ""
+            result += f"""{i + 1}. "{val['text']}" от [https://vk.com/id{val['from_id']}|id{val['from_id']}] к [https://vk.com/public196777471?w=wall-196777471_{val['post_id']}|посту] - {val['likes_count']} likes. {prize}\n"""
+        return result
+
     def _prepareComments(self, comments, post_id):
         result = []
         for comment in comments:
@@ -250,9 +264,9 @@ class Comment(Base):
         return len(likes.intersection(self.subscribers))
 
     @staticmethod
-    def _getBestComment(comments, min_likes=constants.MIN_LIKES):
-        bestComment = max(comments, key=lambda x: x['likes_count'])
-        return bestComment if bestComment['likes_count'] > min_likes else None
+    def _getBestCommentsRating(comments, min_likes=constants.MIN_LIKES):
+        bestComments = sorted(comments, key=lambda x: x['likes_count'], reverse=True)[:constants.TOP_NUMBER]
+        return bestComments
 
     def _getAllSubscribers(self):
         page = 0
