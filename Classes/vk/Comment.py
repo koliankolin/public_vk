@@ -57,7 +57,7 @@ class Comment(Base):
             'comment': commentLeaderBoard,
             'active': activeLeaderBoard,
         }
-        return self._createMessage(leaderBoards)
+        return self._createMessage(leaderBoards, True)
         res = self.api.method('wall.post', {
             'owner_id': -constants.VK_GROUP_ID,
             'from_group': 1,
@@ -73,12 +73,12 @@ class Comment(Base):
         bestCommentPrize = f"Приз: {constants.BEST_COMMENT_PRIZE} р." if need_prizes else ""
         ratings = f"""
 Рейтинг комментеров:
-{self._leaderBoardToStr(leaderBoards['comment'], 'likes')}
+{self._leaderBoardToStr(leaderBoards['comment'], 'likes', True)}
 
 Рейтинг по активности.
 Рассчитывается по формуле:
 рейтинг = кол-во проставленных лайков в группе(комменты + посты) * {constants.ACTIVE_COEFFICIENTS['like']} + кол-во комментов в группе * {constants.ACTIVE_COEFFICIENTS['comment']} + кол-во сделанных репостов * {constants.ACTIVE_COEFFICIENTS['repost']}
-{self._leaderBoardToStr(leaderBoards['active'], 'points')}
+{self._leaderBoardToStr(leaderBoards['active'], 'points', True)}
         """
         frm = '%d.%m.%Y'
         date_start = datetime.utcfromtimestamp(self.start_time).strftime(frm)
@@ -86,8 +86,8 @@ class Comment(Base):
         return f"""Лучшие мамкины комментеры недели ({date_start} - {date_end})
 
 Лучший комментарий:
-Награждается [https://vk.com/id{leaderBoards['best_comment']['from_id']}|id{leaderBoards['best_comment']['from_id']}] за комментарий 
-"{leaderBoards['best_comment']['text']}" к [https://vk.com/public196777471?w=wall-196777471_{leaderBoards['best_comment']['post_id']}|посту]
+"{leaderBoards['best_comment']['text']}"
+от [https://vk.com/id{leaderBoards['best_comment']['from_id']}|id{leaderBoards['best_comment']['from_id']}] к [https://vk.com/public196777471?w=wall-196777471_{leaderBoards['best_comment']['post_id']}|посту] собрал {leaderBoards['likes_count']}
 {bestCommentPrize}
 {ratings}
 """
@@ -159,9 +159,9 @@ class Comment(Base):
     @staticmethod
     def _leaderBoardToStr(leaderBoard, type, need_prizes=False):
         result = ''
-        for (i, val), price in zip(enumerate(leaderBoard.items()), constants.PRIZES):
+        for i, val in enumerate(leaderBoard.items()):
             id_, likes = val
-            prize = f"Приз: {price} р.\n" if need_prizes else ""
+            prize = f"Приз: {constants.PRIZES[i]} р." if need_prizes else ""
             result += f"{i + 1}. [https://vk.com/id{id_}|id{id_}] - {likes} {type}. {prize}\n"
         return result
 
