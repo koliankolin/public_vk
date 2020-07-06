@@ -118,6 +118,8 @@ class Comment(Base):
 
         return f"""{header}
 
+Осталось подписчиков до денежных призов: {50000 - len(self.subscribers)}
+
 {ratings}
 """
 
