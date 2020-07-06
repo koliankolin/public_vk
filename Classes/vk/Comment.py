@@ -123,7 +123,7 @@ class Comment(Base):
 
     @staticmethod
     def _checkIsFinDate():
-        return datetime.today().weekday() == 0
+        return datetime.today().weekday() == 6
 
     def _filterLeaderBoardBySubscribers(self, leaderBoard):
         filteredLeaderBoard = OrderedDict()
