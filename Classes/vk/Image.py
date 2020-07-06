@@ -14,7 +14,7 @@ class ImageCls(Base):
         super().__init__()
         self.photo_link = Unsplash().loadImageUrl()
 
-    def loadPhoto(self):
+    def loadMem(self):
         ua = UserAgent()
         headers = {
             'User-Agent': ua.chrome
@@ -25,8 +25,12 @@ class ImageCls(Base):
             handler.write(img_data)
 
         file_mem = self._createMemFromPhoto(file_name)
-        return file_mem
+        # return file_mem
         photo = self.uploader.photo_wall(file_mem, group_id=constants.VK_GROUP_ID)[0]
+        return 'photo{owner_id}_{id}'.format(**photo)
+
+    def loadPhoto(self, file_path):
+        photo = self.uploader.photo_wall(file_path, group_id=constants.VK_GROUP_ID)[0]
         return 'photo{owner_id}_{id}'.format(**photo)
 
     @staticmethod
@@ -101,3 +105,67 @@ class ImageCls(Base):
         img.save(path_out, 'PNG')
 
         return path_out
+
+    def createRatingPhoto(self, leaderBoards, date, path_file='img/leader_board.png'):
+        width, height = 800, 900
+        thumb = 64, 64
+
+        img = Image.new('RGBA', (width, height), color='white')
+        fnt = ImageFont.truetype('fonts/YesevaOne-Regular.ttf', int(img.size[0] * 0.04))
+        fnt_point = ImageFont.truetype('fonts/Roboto-Regular.ttf', int(img.size[0] * 0.04))
+
+        d = ImageDraw.Draw(img)
+
+        header = 'Топчики Недели'
+        w, h = d.textsize(header, font=fnt)
+        txt_height = img.size[1] * 0.01
+        d.text(((img.size[0] - w) / 2, txt_height), header, font=fnt, fill='black')
+
+        w, h = d.textsize(date, font=fnt)
+        d.text(((img.size[0] - w) / 2, h + 10), date, font=fnt, fill='black')
+
+        # d.text((15, img.size[1] * 0.8), '*Подробности в палике МамкиН КомментеР', font=fnt, fill='white')
+        first_place = Image.open('img/icons/1st_place.png')
+        first_place = first_place.convert("RGBA")
+        first_place.thumbnail(thumb, Image.ANTIALIAS)
+
+        second_place = Image.open('img/icons/2st_place.png')
+        second_place = second_place.convert("RGBA")
+        second_place.thumbnail(thumb, Image.ANTIALIAS)
+
+        third_place = Image.open('img/icons/3rd_place.png')
+        third_place = third_place.convert("RGBA")
+        third_place.thumbnail(thumb, Image.ANTIALIAS)
+
+        margin_top = int(img.size[0] * 0.08)
+
+        lb = leaderBoards['best_comments']
+        d.text((230, margin_top + 70 * 0.4), 'Рейтинг Комментов:', font=fnt, fill='black')
+        img.alpha_composite(first_place, (10, margin_top + 70))
+        d.text((70, margin_top + 80), f'{lb[0]["from_id"]} - {lb[0]["likes_count"]} likes', font=fnt_point, fill='black')
+        img.alpha_composite(second_place, (10, margin_top + 70 * 2))
+        d.text((70, margin_top + 70 * 2 + 10), f'{lb[0]["from_id"]} - {lb[0]["likes_count"]} likes', font=fnt_point, fill='black')
+        img.alpha_composite(third_place, (10, margin_top + 70 * 3))
+        d.text((70, margin_top + 70 * 3 + 10), f'{lb[0]["from_id"]} - {lb[0]["likes_count"]} likes', font=fnt_point, fill='black')
+
+        lb = leaderBoards['comment']
+        d.text((230, margin_top + 70 * 4.4), 'Рейтинг Комментеров:', font=fnt, fill='black')
+        img.alpha_composite(first_place, (10, margin_top + 70 * 5))
+        d.text((70, margin_top + 70 * 5 + 10), f'{list(lb.keys())[0]} - {list(lb.values())[0]} likes', font=fnt_point, fill='black')
+        img.alpha_composite(second_place, (10, margin_top + 70 * 6))
+        d.text((70, margin_top + 70 * 6 + 10), f'{list(lb.keys())[0]} - {list(lb.values())[0]} likes', font=fnt_point, fill='black')
+        img.alpha_composite(third_place, (10, margin_top + 70 * 7))
+        d.text((70, margin_top + 70 * 7 + 10), f'{list(lb.keys())[0]} - {list(lb.values())[0]} likes', font=fnt_point, fill='black')
+
+        lb = leaderBoards['active']
+        d.text((230, margin_top + 70 * 8.4), 'Рейтинг Активных:', font=fnt, fill='black')
+        img.alpha_composite(first_place, (10, margin_top + 70 * 9))
+        d.text((70, margin_top + 70 * 9 + 10), f'{list(lb.keys())[0]} - {list(lb.values())[0]} points', font=fnt_point, fill='black')
+        img.alpha_composite(second_place, (10, margin_top + 70 * 10))
+        d.text((70, margin_top + 70 * 10 + 10), f'{list(lb.keys())[0]} - {list(lb.values())[0]} points', font=fnt_point, fill='black')
+        img.alpha_composite(third_place, (10, margin_top + 70 * 11))
+        d.text((70, margin_top + 70 * 11 + 10), f'{list(lb.keys())[0]} - {list(lb.values())[0]} points', font=fnt_point, fill='black')
+
+        img.save(path_file, 'PNG')
+
+        return path_file

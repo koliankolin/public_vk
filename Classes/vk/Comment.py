@@ -5,7 +5,7 @@ import random
 from datetime import datetime
 from collections import Counter, OrderedDict
 import os
-
+from Classes.vk.Image import ImageCls
 
 class Comment(Base):
     def __init__(self, start_time, end_time):
@@ -44,7 +44,6 @@ class Comment(Base):
             counterReposts += self._getCounterUsersReposts(postId)
             comments += preparedComments
         bestComments = self._getBestCommentsRating(comments)
-        # bestCommentsLeaderBoard = self._getBestCommentsRatingToStr(OrderedDict(bestComments))
         commentLeaderBoard = self._filterLeaderBoardBySubscribers(OrderedDict(self._getCommentLeaderBoard(comments)))
 
         counters = {
@@ -59,6 +58,9 @@ class Comment(Base):
             'comment': commentLeaderBoard,
             'active': activeLeaderBoard,
         }
+
+        image = ImageCls()
+
         statsPostId = self._getStatsPostId()
         if statsPostId:
             self._deletePostById(statsPostId)
@@ -67,7 +69,7 @@ class Comment(Base):
             'owner_id': -constants.VK_GROUP_ID,
             'from_group': 1,
             'message': self._createMessage(leaderBoards),
-            # 'attachments': Image(photo_link=new.img).loadPhoto(),
+            'attachments': image.loadPhoto(image.createRatingPhoto(leaderBoards, self._createDatePeriod())),
             'signed': 0,
         })
         self._savePostIdToFile(res['post_id'])
@@ -95,13 +97,17 @@ class Comment(Base):
             'post_id': postId,
         })
 
-    def _createMessage(self, leaderBoards, need_prizes=False):
-        #TODO add full names from VK
+    def _createDatePeriod(self):
         frm = '%d.%m.%Y'
         date_start = datetime.utcfromtimestamp(self.start_time).strftime(frm)
         date_end = datetime.utcfromtimestamp(self.end_time).strftime(frm)
+
+        return f'{date_start} - {date_end}'
+
+    def _createMessage(self, leaderBoards):
+        #TODO add full names from VK
         is_fin = self._checkIsFinDate()
-        header = f"Финальные рейтинги за неделю {date_start} - {date_end}" if is_fin else f"Предварительные рейтинги за неделю {date_start} - {date_end}"
+        header = f"Финальные рейтинги за неделю {self._createDatePeriod()}" if is_fin else f"Предварительные рейтинги за неделю {self._createDatePeriod()}"
 
         ratings = f"""
 Рейтинг комментариев:

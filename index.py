@@ -1,6 +1,7 @@
 from Classes.image.Unsplash import Unsplash
 from Classes.vk.Image import ImageCls
 from Classes.vk.Comment import Comment
+from Classes.vk.Post import Post
 
 import time
 from datetime import datetime, timedelta, date
@@ -23,6 +24,8 @@ def main():
     # print(unsplash.loadImageUrl())
     # image = ImageCls()
     # print(image.loadPhoto())
+    # post = Post()
+    # print(post.post([int(time.mktime(datetime.now().timetuple())) + 30]))
     comment = Comment(start_time, end_time)
     print(comment.getStats())
 
