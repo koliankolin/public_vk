@@ -1,7 +1,7 @@
 from Classes.vk.Base import Base
 import constants
 import time
-import random
+import time
 from datetime import datetime
 from collections import Counter, OrderedDict
 import os
@@ -225,6 +225,13 @@ class Comment(Base):
     def _prepareComments(self, comments, post_id):
         result = []
         for comment in comments:
+            # TODO: switch on deleting comments
+            # if comment['likes']['count'] < 10 and (int(time.time() - int(comment['date']))) > 86400: # 24 hours
+            #     self.api.method('wall.deleteComment', {
+            #         'owner_id': -constants.VK_GROUP_ID,
+            #         'comment_id': str(comment['id']),
+            #     })
+
             if comment['from_id'] in self.subscribers:
                 result.append({
                     'from_id': comment['from_id'],
