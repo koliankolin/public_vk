@@ -115,7 +115,6 @@ class Comment(Base):
         return f'{date_start} - {date_end}'
 
     def _createMessage(self, leaderBoards):
-        #TODO add full names from VK
         is_fin = self._checkIsFinDate()
         header = f"Финальные рейтинги за неделю {self._createDatePeriod()}" if is_fin else f"Предварительные рейтинги за неделю {self._createDatePeriod()}"
 
