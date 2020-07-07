@@ -8,6 +8,7 @@ import os
 from Classes.vk.Image import ImageCls
 from Classes.vk.Utils import Utils
 
+
 class Comment(Base):
     def __init__(self, start_time, end_time):
         super().__init__()
@@ -65,7 +66,8 @@ class Comment(Base):
 
         statsPostId = self._getStatsPostId()
         if statsPostId:
-            self._deletePostById(statsPostId)
+            # self._deletePostById(statsPostId)
+            self._unpinPostById(statsPostId)
 
         res = self.api.method('wall.post', {
             'owner_id': -constants.VK_GROUP_ID,
@@ -88,6 +90,12 @@ class Comment(Base):
              'owner_id': -constants.VK_GROUP_ID,
              'post_id': str(post_id),
          })
+
+    def _unpinPostById(self, post_id):
+        self.api.method('wall.unpin', {
+            'owner_id': -constants.VK_GROUP_ID,
+            'post_id': str(post_id),
+        })
 
     def _savePostIdToFile(self, postId):
         with open(self.fileStatsPostId, 'w') as f:
