@@ -6,6 +6,7 @@ from datetime import datetime
 from collections import Counter, OrderedDict
 import os
 from Classes.vk.Image import ImageCls
+from Classes.vk.Utils import Utils
 
 class Comment(Base):
     def __init__(self, start_time, end_time):
@@ -15,6 +16,7 @@ class Comment(Base):
         self.subscribers = self._getAllSubscribers()
         self.posts = self._getPosts()
         self.fileStatsPostId = 'stats.id'
+        self.utils = Utils()
 
     def _getPosts(self):
         return self.api.method('newsfeed.get', {
@@ -197,21 +199,19 @@ class Comment(Base):
             users[comment['from_id']] += comment['likes_count']
         return sorted(users.items(), key=lambda item: item[1], reverse=True)[:constants.TOP_NUMBER]
 
-    @staticmethod
-    def _leaderBoardToStr(leaderBoard, type, need_prizes=False):
+    def _leaderBoardToStr(self, leaderBoard, type, need_prizes=False):
         result = ''
         for i, val in enumerate(leaderBoard.items()):
             id_, likes = val
             prize = f"Приз: {constants.PRIZES[i]} р." if need_prizes else ""
-            result += f"{i + 1}. [https://vk.com/id{id_}|id{id_}] - {likes} {type}. {prize}\n"
+            result += f"{i + 1}. [https://vk.com/id{id_}|{self.utils.getFullNameById(id_)}] - {likes} {type}. {prize}\n"
         return result
 
-    @staticmethod
-    def _getBestCommentsRatingToStr(leaderBoard, need_prizes=False):
+    def _getBestCommentsRatingToStr(self, leaderBoard, need_prizes=False):
         result = ''
         for i, val in enumerate(leaderBoard):
             prize = f"Приз: {constants.BEST_COMMENT_PRIZE[i]} р." if need_prizes else ""
-            result += f"""{i + 1}. "{val['text']}" от [https://vk.com/id{val['from_id']}|id{val['from_id']}] к [https://vk.com/public196777471?w=wall-196777471_{val['post_id']}|посту] - {val['likes_count']} likes. {prize}\n"""
+            result += f"""{i + 1}. "{val['text']}" от [https://vk.com/id{val['from_id']}|{self.utils.getFullNameById(val['from_id'])}] к [https://vk.com/public196777471?w=wall-196777471_{val['post_id']}|посту] - {val['likes_count']} likes. {prize}\n"""
         return result
 
     def _prepareComments(self, comments, post_id):

@@ -8,11 +8,14 @@ import math
 import mem_const
 import random
 from Classes.image.Unsplash import Unsplash
+from Classes.vk.Utils import Utils
+
 
 class ImageCls(Base):
     def __init__(self):
         super().__init__()
         self.photo_link = Unsplash().loadImageUrl()
+        self.utils = Utils()
 
     def loadMem(self):
         ua = UserAgent()
@@ -124,7 +127,6 @@ class ImageCls(Base):
         w, h = d.textsize(date, font=fnt)
         d.text(((img.size[0] - w) / 2, h + 10), date, font=fnt, fill='black')
 
-        # d.text((15, img.size[1] * 0.8), '*Подробности в палике МамкиН КомментеР', font=fnt, fill='white')
         first_place = Image.open('img/icons/1st_place.png')
         first_place = first_place.convert("RGBA")
         first_place.thumbnail(thumb, Image.ANTIALIAS)
@@ -140,31 +142,46 @@ class ImageCls(Base):
         margin_top = int(img.size[0] * 0.08)
 
         lb = leaderBoards['best_comments']
-        d.text((230, margin_top + 70 * 0.4), 'Рейтинг Комментов:', font=fnt, fill='black')
-        img.alpha_composite(first_place, (10, margin_top + 70))
-        d.text((70, margin_top + 80), f'{lb[0]["from_id"]} - {lb[0]["likes_count"]} likes', font=fnt_point, fill='black')
-        img.alpha_composite(second_place, (10, margin_top + 70 * 2))
-        d.text((70, margin_top + 70 * 2 + 10), f'{lb[0]["from_id"]} - {lb[0]["likes_count"]} likes', font=fnt_point, fill='black')
-        img.alpha_composite(third_place, (10, margin_top + 70 * 3))
-        d.text((70, margin_top + 70 * 3 + 10), f'{lb[0]["from_id"]} - {lb[0]["likes_count"]} likes', font=fnt_point, fill='black')
+        names = [self.utils.getFullNameById(l_['from_id']) for l_ in lb]
+        values = [l_["likes_count"] for l_ in lb]
+        if len(names) > 1:
+            d.text((230, margin_top + 70 * 0.4), 'Рейтинг Комментов:', font=fnt, fill='black')
+            img.alpha_composite(first_place, (10, margin_top + 70))
+            d.text((70, margin_top + 80), f'{names[0]} - {values[0]} likes', font=fnt_point, fill='black')
+        elif len(names) > 2:
+            img.alpha_composite(second_place, (10, margin_top + 70 * 2))
+            d.text((70, margin_top + 70 * 2 + 10), f'{names[1]} - {values[1]} likes', font=fnt_point, fill='black')
+        elif len(names) > 3:
+            img.alpha_composite(third_place, (10, margin_top + 70 * 3))
+            d.text((70, margin_top + 70 * 3 + 10), f'{names[2]} - {values[2]} likes', font=fnt_point, fill='black')
 
         lb = leaderBoards['comment']
-        d.text((230, margin_top + 70 * 4.4), 'Рейтинг Комментеров:', font=fnt, fill='black')
-        img.alpha_composite(first_place, (10, margin_top + 70 * 5))
-        d.text((70, margin_top + 70 * 5 + 10), f'{list(lb.keys())[0]} - {list(lb.values())[0]} likes', font=fnt_point, fill='black')
-        img.alpha_composite(second_place, (10, margin_top + 70 * 6))
-        d.text((70, margin_top + 70 * 6 + 10), f'{list(lb.keys())[0]} - {list(lb.values())[0]} likes', font=fnt_point, fill='black')
-        img.alpha_composite(third_place, (10, margin_top + 70 * 7))
-        d.text((70, margin_top + 70 * 7 + 10), f'{list(lb.keys())[0]} - {list(lb.values())[0]} likes', font=fnt_point, fill='black')
+        names = [self.utils.getFullNameById(id_) for id_ in list(lb.keys())]
+        values = list(lb.values())
+        if len(names) > 1:
+            d.text((230, margin_top + 70 * 4.4), 'Рейтинг Комментеров:', font=fnt, fill='black')
+            img.alpha_composite(first_place, (10, margin_top + 70 * 5))
+            d.text((70, margin_top + 70 * 5 + 10), f'{names[0]} - {values[0]} likes', font=fnt_point, fill='black')
+        elif len(names) > 2:
+            img.alpha_composite(second_place, (10, margin_top + 70 * 6))
+            d.text((70, margin_top + 70 * 6 + 10), f'{names[1]} - {values[1]} likes', font=fnt_point, fill='black')
+        elif len(names) > 3:
+            img.alpha_composite(third_place, (10, margin_top + 70 * 7))
+            d.text((70, margin_top + 70 * 7 + 10), f'{names[2]} - {values[2]} likes', font=fnt_point, fill='black')
 
         lb = leaderBoards['active']
-        d.text((230, margin_top + 70 * 8.4), 'Рейтинг Активных:', font=fnt, fill='black')
-        img.alpha_composite(first_place, (10, margin_top + 70 * 9))
-        d.text((70, margin_top + 70 * 9 + 10), f'{list(lb.keys())[0]} - {list(lb.values())[0]} points', font=fnt_point, fill='black')
-        img.alpha_composite(second_place, (10, margin_top + 70 * 10))
-        d.text((70, margin_top + 70 * 10 + 10), f'{list(lb.keys())[0]} - {list(lb.values())[0]} points', font=fnt_point, fill='black')
-        img.alpha_composite(third_place, (10, margin_top + 70 * 11))
-        d.text((70, margin_top + 70 * 11 + 10), f'{list(lb.keys())[0]} - {list(lb.values())[0]} points', font=fnt_point, fill='black')
+        names = [self.utils.getFullNameById(id_) for id_ in list(lb.keys())]
+        values = list(lb.values())
+        if len(names) > 1:
+            d.text((230, margin_top + 70 * 8.4), 'Рейтинг Активных:', font=fnt, fill='black')
+            img.alpha_composite(first_place, (10, margin_top + 70 * 9))
+            d.text((70, margin_top + 70 * 9 + 10), f'{names[0]} - {values[0]} points', font=fnt_point, fill='black')
+        elif len(names) > 2:
+            img.alpha_composite(second_place, (10, margin_top + 70 * 10))
+            d.text((70, margin_top + 70 * 10 + 10), f'{names[1]} - {values[1]} points', font=fnt_point, fill='black')
+        elif len(names) > 3:
+            img.alpha_composite(third_place, (10, margin_top + 70 * 11))
+            d.text((70, margin_top + 70 * 11 + 10), f'{names[2]} - {values[2]} points', font=fnt_point, fill='black')
 
         img.save(path_file, 'PNG')
 
