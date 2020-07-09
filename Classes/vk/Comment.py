@@ -127,15 +127,11 @@ class Comment(Base):
 Рейтинг комментеров:
 {self._leaderBoardToStr(leaderBoards['comment'], 'likes')}
 
-Рейтинг по активности.
-Рассчитывается по формуле:
-рейтинг = кол-во проставленных лайков в группе(комменты + посты) * {constants.ACTIVE_COEFFICIENTS['like']} + кол-во комментов в группе * {constants.ACTIVE_COEFFICIENTS['comment']} + кол-во сделанных репостов * {constants.ACTIVE_COEFFICIENTS['repost']}
+Рейтинг по активности:
 {self._leaderBoardToStr(leaderBoards['active'], 'points')}
         """
 
         return f"""{header}
-
-Осталось подписчиков до денежных призов: {50000 - len(self.subscribers)}
 
 {ratings}
 
