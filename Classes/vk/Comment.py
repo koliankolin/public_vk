@@ -68,6 +68,7 @@ class Comment(Base):
         if statsPostId:
             # self._deletePostById(statsPostId)
             self._unpinPostById(statsPostId)
+            time.sleep(0.5)
 
         res = self.api.method('wall.post', {
             'owner_id': -constants.VK_GROUP_ID,
@@ -76,6 +77,7 @@ class Comment(Base):
             'attachments': image.loadPhoto(image.createRatingPhoto(leaderBoards, self._createDatePeriod())),
             'signed': 0,
         })
+        time.sleep(0.5)
         self._savePostIdToFile(res['post_id'])
         self._pinPostById(res['post_id'])
 
@@ -213,14 +215,14 @@ class Comment(Base):
         for i, val in enumerate(leaderBoard.items()):
             id_, likes = val
             prize = f"Приз: {constants.PRIZES[i]} р." if need_prizes else ""
-            result += f"{i + 1}. [https://vk.com/id{id_}|{self.utils.getFullNameById(id_)}] - {likes} {type}. {prize}\n"
+            result += f"{i + 1}. [https://vk.com/id{id_}|{self.utils.getFullNameById([id_])[0]}] - {likes} {type}. {prize}\n"
         return result
 
     def _getBestCommentsRatingToStr(self, leaderBoard, need_prizes=False):
         result = ''
         for i, val in enumerate(leaderBoard):
             prize = f"Приз: {constants.BEST_COMMENT_PRIZE[i]} р." if need_prizes else ""
-            result += f"""{i + 1}. "{val['text']}" от [https://vk.com/id{val['from_id']}|{self.utils.getFullNameById(val['from_id'])}] к [https://vk.com/public196777471?w=wall-196777471_{val['post_id']}|посту] - {val['likes_count']} likes. {prize}\n"""
+            result += f"""{i + 1}. "{val['text']}" от [https://vk.com/id{val['from_id']}|{self.utils.getFullNameById([val['from_id']])[0]}] к [https://vk.com/public196777471?w=wall-196777471_{val['post_id']}|посту] - {val['likes_count']} likes. {prize}\n"""
         return result
 
     def _prepareComments(self, comments, post_id):

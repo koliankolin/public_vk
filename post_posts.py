@@ -17,14 +17,18 @@ def createPostDates(hours):
 
 
 def main():
-    hour_st = 10
-    hour_end = 18
-    silent = 2
+    hour_st = 8
+    hour_end = 23
+    silent = 3
 
     dates = createPostDates(range(hour_st, hour_end, silent))
 
     post = Post()
-    post.post(dates)
+    try:
+        post.post(dates)
+        print('All posts were posted :)')
+    except:
+        print('Something went wrong :(')
 
 
 if __name__ == '__main__':
