@@ -136,6 +136,8 @@ class Comment(Base):
 Осталось подписчиков до денежных призов: {50000 - len(self.subscribers)}
 
 {ratings}
+
+#rating@mamkin_commenter
 """
 
     @staticmethod
