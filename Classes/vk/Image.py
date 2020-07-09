@@ -1,7 +1,7 @@
 import constants
 from Classes.vk.Base import Base
 from fake_useragent import UserAgent
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import textwrap
 import requests
 import math
@@ -18,16 +18,16 @@ class ImageCls(Base):
         self.utils = Utils()
 
     def loadMem(self):
-        ua = UserAgent()
-        headers = {
-            'User-Agent': ua.chrome
-        }
-        img_data = requests.get(self.photo_link, headers=headers).content
-        file_name = f'./img/sample.png'
-        with open(file_name, 'wb') as handler:
-            handler.write(img_data)
+        # ua = UserAgent()
+        # headers = {
+        #     'User-Agent': ua.chrome
+        # }
+        # img_data = requests.get(self.photo_link, headers=headers).content
+        # file_name = f'./img/sample.png'
+        # with open(file_name, 'wb') as handler:
+        #     handler.write(img_data)
 
-        file_mem = self._createMemFromPhoto(file_name)
+        file_mem = self._createMemFromPhoto(self.utils.downloadPhotoByUrl(self.photo_link, './img/sample.png'))
         # return file_mem
         photo = self.uploader.photo_wall(file_mem, group_id=constants.VK_GROUP_ID)[0]
         return 'photo{owner_id}_{id}'.format(**photo)
@@ -185,5 +185,65 @@ class ImageCls(Base):
             d.text((70, margin_top + 70 * 11 + 10), f'{names[2]} - {values[2]} points', font=fnt_point, fill='black')
 
         img.save(path_file, 'PNG')
+
+        return path_file
+
+    def createCover(self, leaderBoards):
+        path_file = 'layouts/cover_web_edit.png'
+        file_open = 'layouts/cover_web.png'
+
+        img = Image.open(file_open)
+        img = img.convert("RGBA")
+        thumb_width = 180
+
+        fnt = ImageFont.truetype('fonts/Roboto-Regular.ttf', 30)
+
+        ids = [
+            leaderBoards['best_comments'][0]['from_id'],
+            list(leaderBoards['comment'].keys())[0],
+            list(leaderBoards['active'].keys())[0],
+        ]
+
+        names = [self.utils.getFullNameById([id_])[0] for id_ in ids]
+        photos = [self.utils.downloadPhotoById(id_) for id_ in ids]
+
+        paste_imgs = [Image.open(photo) for photo in photos]
+
+        def crop_center(pil_img, crop_width, crop_height):
+            img_width, img_height = pil_img.size
+            return pil_img.crop(((img_width - crop_width) // 2,
+                                 (img_height - crop_height) // 2,
+                                 (img_width + crop_width) // 2,
+                                 (img_height + crop_height) // 2))
+
+        im_thumbs = [crop_center(paste_img, thumb_width, thumb_width) for paste_img in paste_imgs]
+
+        def mask_circle_transparent(pil_img, blur_radius, offset=0):
+            offset = blur_radius * 2 + offset
+            mask = Image.new("L", pil_img.size, 0)
+            draw = ImageDraw.Draw(mask)
+            draw.ellipse((offset, offset, pil_img.size[0] - offset, pil_img.size[1] - offset), fill=255)
+            mask = mask.filter(ImageFilter.GaussianBlur(blur_radius))
+
+            result = pil_img.copy()
+            result.putalpha(mask)
+
+            return result
+
+        # im_square = im_thumb.resize((thumb_width, thumb_width), Image.LANCZOS)
+        im_thumbs = [mask_circle_transparent(im_thumb, 3) for im_thumb in im_thumbs]
+
+        d = ImageDraw.Draw(img)
+
+        img.alpha_composite(im_thumbs[0], (750, 40))
+        d.text((730, 260), '\n'.join(names[0].split(' ')), font=fnt, fill='white')
+
+        img.alpha_composite(im_thumbs[1], (970, 40))
+        d.text((990, 260), '\n'.join(names[1].split(' ')), font=fnt, fill='white')
+
+        img.alpha_composite(im_thumbs[2], (1190, 40))
+        d.text((1200, 260), '\n'.join(names[2].split(' ')), font=fnt, fill='white')
+
+        img.save(path_file)
 
         return path_file

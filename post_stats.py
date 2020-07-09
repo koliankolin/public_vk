@@ -33,7 +33,7 @@ def main():
     # except:
     #     print('Something went wrong :(')
     # utils = Utils()
-    # print(utils.getFullNameById([3, 4]))
+    # print(utils.downloadPhotoById(1))
 
 if __name__ == '__main__':
     main()

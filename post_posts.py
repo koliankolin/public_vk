@@ -24,11 +24,11 @@ def main():
     dates = createPostDates(range(hour_st, hour_end, silent))
 
     post = Post()
-    try:
-        post.post(dates)
-        print('All posts were posted :)')
-    except:
-        print('Something went wrong :(')
+    # try:
+    post.post(dates)
+        # print('All posts were posted :)')
+    # except:
+    #     print('Something went wrong :(')
 
 
 if __name__ == '__main__':
