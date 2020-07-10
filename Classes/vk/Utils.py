@@ -2,6 +2,7 @@ from Classes.vk.Base import Base
 import time
 from fake_useragent import UserAgent
 import requests
+from datetime import datetime
 
 class Utils(Base):
     def __init__(self):
@@ -34,4 +35,16 @@ class Utils(Base):
         out_file = self.downloadPhotoByUrl(res['photo_200'], 'img/avatar.jpg')
         time.sleep(0.4)
         return out_file
+
+    @staticmethod
+    def checkIsSunday():
+        return datetime.today().weekday() == 6
+
+    def getWeekId(self):
+        with open('week.id', 'r') as f:
+            week_id = f.readline()
+        if self.checkIsSunday():
+            with open('week.id', 'w') as f:
+                f.write(str(int(week_id) + 1))
+        return week_id
 

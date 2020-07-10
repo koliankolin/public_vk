@@ -64,7 +64,7 @@ class Comment(Base):
 
         image = ImageCls()
 
-        cover = image.createCover(leaderBoards)
+        cover = image.createCover(leaderBoards, is_test=True)
         return self.uploader.photo_cover(cover, constants.VK_GROUP_ID, crop_x2=1590, crop_y2=400)
 
         statsPostId = self._getStatsPostId()
@@ -120,7 +120,7 @@ class Comment(Base):
         return f'{date_start} - {date_end}'
 
     def _createMessage(self, leaderBoards):
-        is_fin = self._checkIsFinDate()
+        is_fin = self.utils.checkIsSunday()
         header = f"Финальные рейтинги за неделю {self._createDatePeriod()}" if is_fin else f"Предварительные рейтинги за неделю {self._createDatePeriod()}"
 
         ratings = f"""
@@ -140,10 +140,6 @@ class Comment(Base):
 
 #rating@mamkin_commenter
 """
-
-    @staticmethod
-    def _checkIsFinDate():
-        return datetime.today().weekday() == 6
 
     def _filterLeaderBoardBySubscribers(self, leaderBoard):
         filteredLeaderBoard = OrderedDict()
