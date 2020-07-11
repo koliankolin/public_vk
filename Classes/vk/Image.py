@@ -210,11 +210,9 @@ class ImageCls(Base):
 
             return str(n) + ' ' + days[p]
 
-        start_date = date(year=2020, month=7, day=27)
-        cover_phrase = f'До старта уже {plural_days(-(date.today() - start_date).days).upper()}' \
+        cover_phrase = f'До старта уже {plural_days(-(date.today() - constants.START_DATE).days).upper()}' \
             if is_test else \
             f'Сейчас идет {self.utils.getWeekId()} неделя'
-
 
         fnt = ImageFont.truetype('fonts/Roboto-Regular.ttf', 25)
         fnt_days = ImageFont.truetype('fonts/Roboto-Regular.ttf', 40)
@@ -229,7 +227,7 @@ class ImageCls(Base):
             names = [self.utils.getFullNameById([id_])[0] for id_ in ids]
             photos = [self.utils.downloadPhotoById(id_) for id_ in ids]
         else:
-            names = ['Твое имя', 'Не твое имя', 'Твой кот']
+            names = ['Твое имя', 'Не твое имя', 'Имя твоего кота']
             photos = ['img/fills/fill.png', 'img/fills/fill.png', 'img/fills/fill.png']
 
         paste_imgs = [Image.open(photo) for photo in photos]
