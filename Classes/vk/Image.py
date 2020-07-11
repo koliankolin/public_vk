@@ -9,7 +9,7 @@ import mem_const
 import random
 from Classes.image.Unsplash import Unsplash
 from Classes.vk.Utils import Utils
-from pprint import pprint
+from datetime import date, timedelta
 
 class ImageCls(Base):
     def __init__(self):
@@ -188,35 +188,28 @@ class ImageCls(Base):
 
         return path_file
 
-    def createCover(self, leaderBoards, is_test=True):
-        path_file = 'layouts/cover_web_edit.png'
-        file_open = 'layouts/cover_web_1.png'
+    @staticmethod
+    def _crop_center(pil_img, crop_width, crop_height):
+        img_width, img_height = pil_img.size
+        return pil_img.crop(((img_width - crop_width) // 2,
+                             (img_height - crop_height) // 2,
+                             (img_width + crop_width) // 2,
+                             (img_height + crop_height) // 2))
 
-        img = Image.open(file_open)
-        img = img.convert("RGBA")
-        thumb_width = 180
+    @staticmethod
+    def _mask_circle_transparent(pil_img, blur_radius, offset=0):
+        offset = blur_radius * 2 + offset
+        mask = Image.new("L", pil_img.size, 0)
+        draw = ImageDraw.Draw(mask)
+        draw.ellipse((offset, offset, pil_img.size[0] - offset, pil_img.size[1] - offset), fill=255)
+        mask = mask.filter(ImageFilter.GaussianBlur(blur_radius))
 
-        from datetime import date, timedelta
+        result = pil_img.copy()
+        result.putalpha(mask)
 
-        def plural_days(n):
-            days = ['день', 'дня', 'дней']
+        return result
 
-            if n % 10 == 1 and n % 100 != 11:
-                p = 0
-            elif 2 <= n % 10 <= 4 and (n % 100 < 10 or n % 100 >= 20):
-                p = 1
-            else:
-                p = 2
-
-            return str(n) + ' ' + days[p]
-
-        cover_phrase = f'До старта уже {plural_days(-(date.today() - constants.START_DATE).days).upper()}' \
-            if is_test else \
-            f'Сейчас идет {self.utils.getWeekId()} неделя'
-
-        fnt = ImageFont.truetype('fonts/Roboto-Regular.ttf', 25)
-        fnt_days = ImageFont.truetype('fonts/Roboto-Regular.ttf', 40)
-
+    def _getNamesAndPhotosFromLeaderBoard(self, leaderBoards, is_test):
         if not is_test:
             ids = [
                 leaderBoards['best_comments'][0]['from_id'],
@@ -230,30 +223,34 @@ class ImageCls(Base):
             names = ['Твое имя', 'Не твое имя', 'Имя твоего кота']
             photos = ['img/fills/fill.png', 'img/fills/fill.png', 'img/fills/fill.png']
 
+        return names, photos
+
+    def _getDaysLeft(self):
+        return self.utils.plural_days(-(date.today() - constants.START_DATE).days).upper()
+
+    def _createThumbsFromPhotos(self, photos, thumb_width=180):
         paste_imgs = [Image.open(photo) for photo in photos]
+        im_thumbs = [self._crop_center(paste_img, thumb_width, thumb_width) for paste_img in paste_imgs]
 
-        def crop_center(pil_img, crop_width, crop_height):
-            img_width, img_height = pil_img.size
-            return pil_img.crop(((img_width - crop_width) // 2,
-                                 (img_height - crop_height) // 2,
-                                 (img_width + crop_width) // 2,
-                                 (img_height + crop_height) // 2))
+        return [self._mask_circle_transparent(im_thumb, 3) for im_thumb in im_thumbs]
 
-        im_thumbs = [crop_center(paste_img, thumb_width, thumb_width) for paste_img in paste_imgs]
+    def createCover(self, leaderBoards, is_test):
+        path_file = 'layouts/cover_web_edit.png'
+        file_open = 'layouts/cover_web_1.png'
 
-        def mask_circle_transparent(pil_img, blur_radius, offset=0):
-            offset = blur_radius * 2 + offset
-            mask = Image.new("L", pil_img.size, 0)
-            draw = ImageDraw.Draw(mask)
-            draw.ellipse((offset, offset, pil_img.size[0] - offset, pil_img.size[1] - offset), fill=255)
-            mask = mask.filter(ImageFilter.GaussianBlur(blur_radius))
+        img = Image.open(file_open)
+        img = img.convert("RGBA")
+        thumb_width = 180
 
-            result = pil_img.copy()
-            result.putalpha(mask)
+        cover_phrase = f'До старта уже {self._getDaysLeft()}' \
+            if is_test else \
+            f'Сейчас идет {self.utils.getWeekId()} неделя'
 
-            return result
+        fnt = ImageFont.truetype('fonts/Roboto-Regular.ttf', 25)
+        fnt_days = ImageFont.truetype('fonts/Roboto-Regular.ttf', 40)
 
-        im_thumbs = [mask_circle_transparent(im_thumb, 3) for im_thumb in im_thumbs]
+        names, photos = self._getNamesAndPhotosFromLeaderBoard(leaderBoards, is_test)
+        im_thumbs = self._createThumbsFromPhotos(photos, thumb_width)
 
         d = ImageDraw.Draw(img)
 
@@ -271,3 +268,79 @@ class ImageCls(Base):
         img.save(path_file)
 
         return path_file
+
+    def _createMobileCoverDay(self, leaderBoards, is_test):
+        path_file = 'layouts/mobile/cover_mob_1_edit.png'
+        file_open = 'layouts/mobile/cover_mob_1.png'
+
+        img = Image.open(file_open)
+        img = img.convert("RGBA")
+        thumb_width = 230
+
+        fnt = ImageFont.truetype('fonts/Roboto-Regular.ttf', 40)
+        names, photos = self._getNamesAndPhotosFromLeaderBoard(leaderBoards, is_test)
+        im_thumbs = self._createThumbsFromPhotos(photos, thumb_width)
+
+        d = ImageDraw.Draw(img)
+
+        img.alpha_composite(im_thumbs[0], (130, 670))
+        d.text((100, 905), names[0], font=fnt, fill='white')
+
+        img.alpha_composite(im_thumbs[1], (750, 670))
+        d.text((750, 905), names[1], font=fnt, fill='white')
+
+        img.alpha_composite(im_thumbs[2], (440, 1000))
+        d.text((415, 1230), names[2], font=fnt, fill='white')
+
+        img.save(path_file)
+
+    def _createMobileCoverWeek(self, leaderBoards, is_test):
+        path_file = 'layouts/mobile/cover_mob_2_edit.png'
+        file_open = 'layouts/mobile/cover_mob_2.png'
+
+        img = Image.open(file_open)
+        img = img.convert("RGBA")
+        thumb_width = 230
+
+        fnt = ImageFont.truetype('fonts/Roboto-Regular.ttf', 40)
+
+        if self.utils.checkIsSunday():
+            self.utils.saveNamesAndPhotosWeek(*self._getNamesAndPhotosFromLeaderBoard(leaderBoards, is_test))
+        names, photos = self.utils.getWeekNamesRating()
+
+        im_thumbs = self._createThumbsFromPhotos(photos, thumb_width)
+
+        d = ImageDraw.Draw(img)
+
+        img.alpha_composite(im_thumbs[0], (130, 670))
+        d.text((100, 905), names[0], font=fnt, fill='white')
+
+        img.alpha_composite(im_thumbs[1], (750, 670))
+        d.text((750, 905), names[1], font=fnt, fill='white')
+
+        img.alpha_composite(im_thumbs[2], (440, 1000))
+        d.text((415, 1230), names[2], font=fnt, fill='white')
+
+        img.save(path_file)
+
+    def _createMobileMainCover(self, is_test):
+        path_file = 'layouts/mobile/layout_mob_edit.png'
+        file_open = 'layouts/mobile/layout_mob.png'
+
+        img = Image.open(file_open)
+        img = img.convert("RGBA")
+
+        fnt = ImageFont.truetype('fonts/Roboto-Regular.ttf', 80)
+        cover_phrase = f'До старта уже {self._getDaysLeft()}' \
+            if is_test else \
+            f'Сейчас идет {self.utils.getWeekId()} неделя'
+
+        d = ImageDraw.Draw(img)
+        d.text((102, 1125), cover_phrase, font=fnt, fill='white')
+
+        img.save(path_file)
+
+    def createMobileCovers(self, leaderBoards, is_test):
+        self._createMobileMainCover(is_test)
+        self._createMobileCoverDay(leaderBoards, is_test)
+        self._createMobileCoverWeek(leaderBoards, is_test)

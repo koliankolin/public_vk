@@ -64,7 +64,8 @@ class Comment(Base):
 
         image = ImageCls()
 
-        cover = image.createCover(leaderBoards, is_test=True)
+        cover = image.createCover(leaderBoards, is_test=False)
+        #image.createMobileCovers(leaderBoards, is_test=False)
         return self.uploader.photo_cover(cover, constants.VK_GROUP_ID, crop_x2=1590, crop_y2=400)
 
         statsPostId = self._getStatsPostId()

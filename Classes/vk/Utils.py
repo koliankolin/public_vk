@@ -48,3 +48,31 @@ class Utils(Base):
                 f.write(str(int(week_id) + 1))
         return week_id
 
+    @staticmethod
+    def plural_days(n):
+        days = ['день', 'дня', 'дней']
+
+        if n % 10 == 1 and n % 100 != 11:
+            p = 0
+        elif 2 <= n % 10 <= 4 and (n % 100 < 10 or n % 100 >= 20):
+            p = 1
+        else:
+            p = 2
+
+        return str(n) + ' ' + days[p]
+
+    @staticmethod
+    def getWeekNamesRating():
+        with open('week_rating.id', 'r') as f:
+            names = f.readline().split(',')
+            photos = f.readline().split(',')
+
+        return names, photos
+
+    @staticmethod
+    def saveNamesAndPhotosWeek(names, photos):
+        with open('week_rating.id', 'w') as f:
+            f.write(','.join(names))
+            f.write(','.join(photos))
+
+
