@@ -51,7 +51,8 @@ class Comment(Base):
         commentLeaderBoard = self._filterLeaderBoardBySubscribers(OrderedDict(self._getCommentLeaderBoard(comments)))
 
         counters = {
-            'like': counterPostLikes + counterCommentLikes,
+            'like': counterPostLikes,
+            'comment_like': counterCommentLikes,
             'comment': counterComments,
             # 'repost': counterReposts,
         }
