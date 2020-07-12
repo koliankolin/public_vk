@@ -1,8 +1,8 @@
-LINE_COLOR = '#2B92F5'
+LINE_COLOR = '#1fb6b6'
 MAIN_COLOR = '#fff'
-GRADIENT_COLOR = '#000'
+GRADIENT_COLOR = '#5b33ac'
 
-FONT_LINE = './fonts/YesevaOne-Regular.ttf'
+FONT_LINE = './fonts/Agency_Gothic.otf'
 FONT_MAIN = './fonts/Roboto-Black.ttf'
 
 MEM_TEXTS = (

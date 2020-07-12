@@ -33,7 +33,7 @@ def main():
     # except:
     #     print('Something went wrong :(')
     # utils = Utils()
-    # print(utils.downloadPhotoById(1))
+    # print(utils.isModifiedWeekFileToday())
 
 if __name__ == '__main__':
     main()

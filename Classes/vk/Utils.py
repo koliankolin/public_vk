@@ -3,6 +3,7 @@ import time
 from fake_useragent import UserAgent
 import requests
 from datetime import datetime
+import os
 
 class Utils(Base):
     def __init__(self):
@@ -43,9 +44,7 @@ class Utils(Base):
     def getWeekId(self):
         with open('week.id', 'r') as f:
             week_id = f.readline()
-        if self.checkIsSunday():
-            with open('week.id', 'w') as f:
-                f.write(str(int(week_id) + 1))
+        #
         return week_id
 
     @staticmethod
@@ -73,6 +72,12 @@ class Utils(Base):
     def saveNamesAndPhotosWeek(names, photos):
         with open('week_rating.id', 'w') as f:
             f.write(','.join(names))
+            f.write('\n')
             f.write(','.join(photos))
+
+    @staticmethod
+    def isModifiedWeekFileToday():
+        t = os.path.getmtime('week.id')
+        return datetime.fromtimestamp(t).strftime('%y-%m-%d') == datetime.today().strftime('%y-%m-%d')
 
 

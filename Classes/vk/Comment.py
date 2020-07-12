@@ -2,11 +2,12 @@ from Classes.vk.Base import Base
 import constants
 import time
 import time
-from datetime import datetime
+from datetime import datetime, date
 from collections import Counter, OrderedDict
 import os
 from Classes.vk.Image import ImageCls
 from Classes.vk.Utils import Utils
+from emoji import emojize
 
 
 class Comment(Base):
@@ -52,7 +53,7 @@ class Comment(Base):
         counters = {
             'like': counterPostLikes + counterCommentLikes,
             'comment': counterComments,
-            'repost': counterReposts,
+            # 'repost': counterReposts,
         }
 
         activeLeaderBoard = self._filterLeaderBoardBySubscribers(OrderedDict(self._getActiveLeaderBoard(counters)))
@@ -64,26 +65,30 @@ class Comment(Base):
 
         image = ImageCls()
 
-        cover = image.createCover(leaderBoards, is_test=False)
-        #image.createMobileCovers(leaderBoards, is_test=False)
-        return self.uploader.photo_cover(cover, constants.VK_GROUP_ID, crop_x2=1590, crop_y2=400)
+        cover = image.createCover(leaderBoards, is_test=constants.IS_TEST)
+        image.createMobileCovers(leaderBoards, is_test=constants.IS_TEST)
+        self.uploader.photo_cover(cover, constants.VK_GROUP_ID, crop_x2=1590, crop_y2=400)
 
-        statsPostId = self._getStatsPostId()
-        if statsPostId:
-            # self._deletePostById(statsPostId)
-            self._unpinPostById(statsPostId)
+        if not constants.IS_TEST or True:
+            statsPostId = self._getStatsPostId()
+            if statsPostId:
+                # self._deletePostById(statsPostId)
+                self._unpinPostById(statsPostId)
+                time.sleep(0.5)
+
+            res = self.api.method('wall.post', {
+                'owner_id': -constants.VK_GROUP_ID,
+                'from_group': 1,
+                'message': self._createMessage(leaderBoards),
+                'attachments': image.loadPhoto(image.createRatingPhoto(leaderBoards)),
+                'signed': 0,
+            })
             time.sleep(0.5)
-
-        res = self.api.method('wall.post', {
-            'owner_id': -constants.VK_GROUP_ID,
-            'from_group': 1,
-            'message': self._createMessage(leaderBoards),
-            'attachments': image.loadPhoto(image.createRatingPhoto(leaderBoards, self._createDatePeriod())),
-            'signed': 0,
-        })
-        time.sleep(0.5)
-        self._savePostIdToFile(res['post_id'])
-        self._pinPostById(res['post_id'])
+            self._savePostIdToFile(res['post_id'])
+            self._pinPostById(res['post_id'])
+        if self.utils.checkIsSunday() and not self.utils.isModifiedWeekFileToday():
+            with open('week.id', 'w') as f:
+                f.write(str(int(self.utils.getWeekId()) + 1))
 
     def _getStatsPostId(self):
         if os.path.exists(self.fileStatsPostId):
@@ -121,24 +126,24 @@ class Comment(Base):
         return f'{date_start} - {date_end}'
 
     def _createMessage(self, leaderBoards):
+        week_day = date.today().weekday() + 1
         is_fin = self.utils.checkIsSunday()
-        header = f"Финальные рейтинги за неделю {self._createDatePeriod()}" if is_fin else f"Предварительные рейтинги за неделю {self._createDatePeriod()}"
+        header = emojize(f"Финальные рейтинги за {self.utils.getWeekId()} неделю:trophy::trophy::trophy:" if is_fin else f"Предварительные рейтинги за {week_day} день {self.utils.getWeekId()} неделю:trophy::trophy::trophy:")
 
-        ratings = f"""
-Рейтинг комментариев:
+        ratings = emojize(f"""
+Рейтинг комментариев:right_anger_bubble::
 {self._getBestCommentsRatingToStr(leaderBoards['best_comments'])}
 
-Рейтинг комментеров:
+Рейтинг комментеров:parrot::
 {self._leaderBoardToStr(leaderBoards['comment'], 'likes')}
 
-Рейтинг по активности:
+Рейтинг по активности:zany_face::
 {self._leaderBoardToStr(leaderBoards['active'], 'points')}
-        """
+        """)
 
         return f"""{header}
 
 {ratings}
-
 #rating@mamkin_commenter
 """
 
@@ -208,17 +213,29 @@ class Comment(Base):
 
     def _leaderBoardToStr(self, leaderBoard, type, need_prizes=False):
         result = ''
-        for i, val in enumerate(leaderBoard.items()):
+        for i, val in enumerate(leaderBoard.items(), 1):
             id_, likes = val
             prize = f"Приз: {constants.PRIZES[i]} р." if need_prizes else ""
-            result += f"{i + 1}. [https://vk.com/id{id_}|{self.utils.getFullNameById([id_])[0]}] - {likes} {type}. {prize}\n"
+            if i == 1:
+                i = ':1st_place_medal:'
+            if i == 2:
+                i = ':2nd_place_medal:'
+            if i == 3:
+                i = ':3rd_place_medal:'
+            result += emojize(f"{i} [https://vk.com/id{id_}|{self.utils.getFullNameById([id_])[0]}] - {likes} {type}. {prize}\n")
         return result
 
     def _getBestCommentsRatingToStr(self, leaderBoard, need_prizes=False):
         result = ''
-        for i, val in enumerate(leaderBoard):
+        for i, val in enumerate(leaderBoard, 1):
             prize = f"Приз: {constants.BEST_COMMENT_PRIZE[i]} р." if need_prizes else ""
-            result += f"""{i + 1}. "{val['text']}" от [https://vk.com/id{val['from_id']}|{self.utils.getFullNameById([val['from_id']])[0]}] к [https://vk.com/public196777471?w=wall-196777471_{val['post_id']}|посту] - {val['likes_count']} likes. {prize}\n"""
+            if i == 1:
+                i = ':1st_place_medal:'
+            if i == 2:
+                i = ':2nd_place_medal:'
+            if i == 3:
+                i = ':3rd_place_medal:'
+            result += emojize(f"""{i} "{val['text']}" от [https://vk.com/id{val['from_id']}|{self.utils.getFullNameById([val['from_id']])[0]}] к [https://vk.com/public196777471?w=wall-196777471_{val['post_id']}|посту] - {val['likes_count']} likes. {prize}\n""")
         return result
 
     def _prepareComments(self, comments, post_id):

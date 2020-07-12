@@ -37,7 +37,7 @@ class ImageCls(Base):
         return 'photo{owner_id}_{id}'.format(**photo)
 
     @staticmethod
-    def _createMemFromPhoto(photo_path, gradient=1., initial_opacity=1., path_out='./img/out.png'):
+    def _createMemFromPhoto(photo_path, gradient=3., initial_opacity=1., path_out='./img/out.png'):
         img = Image.open(photo_path)
         input_im = img.convert("RGBA")
 
@@ -109,82 +109,31 @@ class ImageCls(Base):
 
         return path_out
 
-    def createRatingPhoto(self, leaderBoards, date, path_file='img/leader_board.png'):
-        width, height = 800, 900
-        thumb = 64, 64
+    def createRatingPhoto(self, leaderBoards):
+        path_file = 'layouts/rating/rating_week_edit.png' if self.utils.checkIsSunday() else 'layouts/rating/rating_layout_edit.png'
+        file_open = 'layouts/rating/rating_week.png' if self.utils.checkIsSunday() else 'layouts/rating/rating_layout.png'
 
-        img = Image.new('RGBA', (width, height), color='white')
-        fnt = ImageFont.truetype('fonts/YesevaOne-Regular.ttf', int(img.size[0] * 0.04))
-        fnt_point = ImageFont.truetype('fonts/Roboto-Regular.ttf', int(img.size[0] * 0.04))
+        img = Image.open(file_open)
+        img = img.convert("RGBA")
+
+        fnt = ImageFont.truetype('fonts/Agency_Gothic.otf', 80)
+        fnt_name = ImageFont.truetype('fonts/Agency_Gothic.otf', 70)
+
+        week_day = date.today().weekday() + 1
+
+        cover_phrase = f'{week_day} день {self.utils.getWeekId()} неделя' if not self.utils.checkIsSunday() else f'{self.utils.getWeekId()} неделя'
 
         d = ImageDraw.Draw(img)
+        w, h = d.textsize(cover_phrase, font=fnt)
+        d.text(((img.size[0] - w) / 2, 145), cover_phrase, font=fnt, fill='white')
 
-        header = 'Топчики Недели'
-        w, h = d.textsize(header, font=fnt)
-        txt_height = img.size[1] * 0.01
-        d.text(((img.size[0] - w) / 2, txt_height), header, font=fnt, fill='black')
+        names, _ = self._getNamesAndPhotosFromLeaderBoard(leaderBoards, is_test=False)
 
-        w, h = d.textsize(date, font=fnt)
-        d.text(((img.size[0] - w) / 2, h + 10), date, font=fnt, fill='black')
+        for name, height in zip(names, range(350, 800, 175)):
+            w, h = d.textsize(name, font=fnt_name)
+            d.text(((img.size[0] - w) / 2, height), name, font=fnt_name, fill='#1fb6b6')
 
-        first_place = Image.open('img/icons/1st_place.png')
-        first_place = first_place.convert("RGBA")
-        first_place.thumbnail(thumb, Image.ANTIALIAS)
-
-        second_place = Image.open('img/icons/2st_place.png')
-        second_place = second_place.convert("RGBA")
-        second_place.thumbnail(thumb, Image.ANTIALIAS)
-
-        third_place = Image.open('img/icons/3rd_place.png')
-        third_place = third_place.convert("RGBA")
-        third_place.thumbnail(thumb, Image.ANTIALIAS)
-
-        margin_top = int(img.size[0] * 0.08)
-
-        lb = leaderBoards['best_comments']
-        ids = [l_['from_id'] for l_ in lb]
-        names = self.utils.getFullNameById(ids)
-        values = [l_["likes_count"] for l_ in lb]
-        if len(names) > 0:
-            d.text((230, margin_top + 70 * 0.4), 'Рейтинг Комментов:', font=fnt, fill='black')
-            img.alpha_composite(first_place, (10, margin_top + 70))
-            d.text((70, margin_top + 80), f'{names[0]} - {values[0]} likes', font=fnt_point, fill='black')
-        if len(names) > 1:
-            img.alpha_composite(second_place, (10, margin_top + 70 * 2))
-            d.text((70, margin_top + 70 * 2 + 10), f'{names[1]} - {values[1]} likes', font=fnt_point, fill='black')
-        if len(names) > 2:
-            img.alpha_composite(third_place, (10, margin_top + 70 * 3))
-            d.text((70, margin_top + 70 * 3 + 10), f'{names[2]} - {values[2]} likes', font=fnt_point, fill='black')
-
-        lb = leaderBoards['comment']
-        names = self.utils.getFullNameById(list(lb.keys()))
-        values = list(lb.values())
-        if len(names) > 0:
-            d.text((230, margin_top + 70 * 4.4), 'Рейтинг Комментеров:', font=fnt, fill='black')
-            img.alpha_composite(first_place, (10, margin_top + 70 * 5))
-            d.text((70, margin_top + 70 * 5 + 10), f'{names[0]} - {values[0]} likes', font=fnt_point, fill='black')
-        if len(names) > 1:
-            img.alpha_composite(second_place, (10, margin_top + 70 * 6))
-            d.text((70, margin_top + 70 * 6 + 10), f'{names[1]} - {values[1]} likes', font=fnt_point, fill='black')
-        if len(names) > 2:
-            img.alpha_composite(third_place, (10, margin_top + 70 * 7))
-            d.text((70, margin_top + 70 * 7 + 10), f'{names[2]} - {values[2]} likes', font=fnt_point, fill='black')
-
-        lb = leaderBoards['active']
-        names = self.utils.getFullNameById(list(lb.keys()))
-        values = list(lb.values())
-        if len(names) > 0:
-            d.text((230, margin_top + 70 * 8.4), 'Рейтинг Активных:', font=fnt, fill='black')
-            img.alpha_composite(first_place, (10, margin_top + 70 * 9))
-            d.text((70, margin_top + 70 * 9 + 10), f'{names[0]} - {values[0]} points', font=fnt_point, fill='black')
-        if len(names) > 1:
-            img.alpha_composite(second_place, (10, margin_top + 70 * 10))
-            d.text((70, margin_top + 70 * 10 + 10), f'{names[1]} - {values[1]} points', font=fnt_point, fill='black')
-        if len(names) > 2:
-            img.alpha_composite(third_place, (10, margin_top + 70 * 11))
-            d.text((70, margin_top + 70 * 11 + 10), f'{names[2]} - {values[2]} points', font=fnt_point, fill='black')
-
-        img.save(path_file, 'PNG')
+        img.save(path_file)
 
         return path_file
 
