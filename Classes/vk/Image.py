@@ -237,13 +237,16 @@ class ImageCls(Base):
         d = ImageDraw.Draw(img)
 
         img.alpha_composite(im_thumbs[0], (130, 670))
-        d.text((100, 905), names[0], font=fnt, fill='white')
+        w, h = d.textsize(names[0], font=fnt)
+        d.text(((335 - w) / 2 + 78, 905), names[0], font=fnt, fill='white')
 
         img.alpha_composite(im_thumbs[1], (750, 670))
-        d.text((750, 905), names[1], font=fnt, fill='white')
+        w, h = d.textsize(names[1], font=fnt)
+        d.text(((335 - w) / 2 + 700, 905), names[1], font=fnt, fill='white')
 
         img.alpha_composite(im_thumbs[2], (440, 1000))
-        d.text((415, 1230), names[2], font=fnt, fill='white')
+        w, h = d.textsize(names[2], font=fnt)
+        d.text(((335 - w) / 2 + 370, 1230), names[2], font=fnt, fill='white')
 
         img.save(path_file)
 
@@ -266,13 +269,16 @@ class ImageCls(Base):
         d = ImageDraw.Draw(img)
 
         img.alpha_composite(im_thumbs[0], (130, 670))
-        d.text((100, 905), names[0], font=fnt, fill='white')
+        w, h = d.textsize(names[0], font=fnt)
+        d.text(((335 - w) / 2 + 78, 905), names[0], font=fnt, fill='white')
 
         img.alpha_composite(im_thumbs[1], (750, 670))
-        d.text((750, 905), names[1], font=fnt, fill='white')
+        w, h = d.textsize(names[1], font=fnt)
+        d.text(((335 - w) / 2 + 700, 905), names[1], font=fnt, fill='white')
 
         img.alpha_composite(im_thumbs[2], (440, 1000))
-        d.text((415, 1230), names[2], font=fnt, fill='white')
+        w, h = d.textsize(names[2], font=fnt)
+        d.text(((335 - w) / 2 + 370, 1230), names[2], font=fnt, fill='white')
 
         img.save(path_file)
 
@@ -289,7 +295,8 @@ class ImageCls(Base):
             f'Сейчас идет {self.utils.getWeekId()} неделя'
 
         d = ImageDraw.Draw(img)
-        d.text((102, 1125), cover_phrase, font=fnt, fill='white')
+        w, h = d.textsize(cover_phrase, font=fnt)
+        d.text(((950 - w) / 2 + 60, 1125), cover_phrase, font=fnt, fill='white')
 
         img.save(path_file)
 
