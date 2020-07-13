@@ -203,16 +203,20 @@ class ImageCls(Base):
 
         d = ImageDraw.Draw(img)
 
-        d.text((260, 310), cover_phrase, font=fnt_days, fill='white')
+        w, h = d.textsize(cover_phrase, font=fnt_days)
+        d.text(((488 - w) / 2 + 238, 310), cover_phrase, font=fnt_days, fill='white')
 
         img.alpha_composite(im_thumbs[0], (730, 40))
-        d.text((730, 227), names[0], font=fnt, fill='white')
+        w, h = d.textsize(names[0], font=fnt)
+        d.text(((225 - w) / 2 + 715, 227), names[0], font=fnt, fill='white')
 
         img.alpha_composite(im_thumbs[1], (955, 40))
-        d.text((970, 227), names[1], font=fnt, fill='white')
+        w, h = d.textsize(names[1], font=fnt)
+        d.text(((225 - w) / 2 + 935, 227), names[1], font=fnt, fill='white')
 
         img.alpha_composite(im_thumbs[2], (1175, 40))
-        d.text((1180, 227), names[2], font=fnt, fill='white')
+        w, h = d.textsize(names[2], font=fnt)
+        d.text(((225 - w) / 2 + 1155, 227), names[2], font=fnt, fill='white')
 
         img.save(path_file)
 
