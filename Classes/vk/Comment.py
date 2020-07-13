@@ -70,7 +70,7 @@ class Comment(Base):
         image.createMobileCovers(leaderBoards, is_test=constants.IS_TEST)
         self.uploader.photo_cover(cover, constants.VK_GROUP_ID, crop_x2=1590, crop_y2=400)
 
-        if not constants.IS_TEST or True:
+        if not constants.IS_TEST:
             statsPostId = self._getStatsPostId()
             if statsPostId:
                 # self._deletePostById(statsPostId)
